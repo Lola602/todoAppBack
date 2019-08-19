@@ -3,7 +3,9 @@ package com.accenture.letovit.todolist;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -47,8 +49,8 @@ public class ToDoListController {
 	 * Unique identifier is also created and used as a primary key (unique) column in database table.
 	 * Response with generated ID is returned (SaveResponse object).
 	 */
-	@RequestMapping(value ="todos.json", method = RequestMethod.POST)
-	public SaveResponse addToDoItem(@RequestBody ToDoItem request) {
+	@RequestMapping(value ="todos", method = RequestMethod.POST)
+	public String addToDoItem(@RequestBody ToDoItem request) {
 		// validate incoming request with our validator
 		ToDoItemValidator.validate(request);
 		
@@ -65,9 +67,7 @@ public class ToDoListController {
 		repository.save(dbToDoItem);
 		
 		// generate response object with the todo item name (which is generated id)
-		SaveResponse response = new SaveResponse();
-		response.setName(name);
-		return response;
+		return name;
 	}
 	
 	/**
@@ -75,19 +75,17 @@ public class ToDoListController {
 	 * Method will return all records from database as map object.
 	 * Map is converted from java object to json response.
 	 */
-	@RequestMapping(value ="todos.json", method = RequestMethod.GET)
-	public Map<String, ToDoItem> fetchAllToDoItems() {
-		// fetch all data from database table
-		Iterable<DbToDoItem> dbToDoItemList = repository.findAll();
-		// create empty map that will be converted to json
-		Map<String, ToDoItem> toDoItemsMap = new HashMap<String, ToDoItem>();
-		// fill our map with data from database
-		for (DbToDoItem dbToDoItem : dbToDoItemList) {
-			ToDoItem toDoItem = ToDoItemConverter.dbEntityToJson(dbToDoItem);
-			toDoItemsMap.put(dbToDoItem.getIdentifier(), toDoItem);
-		}
-		return toDoItemsMap;
-	}
+    @RequestMapping(value ="todos", method = RequestMethod.GET)
+    public List<ToDoItem> fetchAllToDoItems() {
+        Iterable<DbToDoItem> dbToDoItemList = repository.findAll();
+        
+        List<ToDoItem> toDoItems = new ArrayList<ToDoItem>();
+        
+        for(DbToDoItem dbToDoItem : dbToDoItemList) {
+        	toDoItems.add(ToDoItemConverter.dbEntityToJson(dbToDoItem));
+        }
+        return toDoItems;
+    }    
 	
 	/**
 	 * DELETE request handling method listening on '<base_url>/todos/{identifier}.json' URL. 
@@ -95,7 +93,7 @@ public class ToDoListController {
 	 * Method is returning nothing - that means empty response is returned to front-end.
 	 * @PathVariable identifier is received in our request from front-end
 	 */
-	@RequestMapping(value ="/todos/{identifier}.json", method = RequestMethod.DELETE)
+	@RequestMapping(value ="/todos/{identifier}", method = RequestMethod.DELETE)
 	public void deleteToDoItem(@PathVariable String identifier) {
 		// delete the record from DB
 		repository.deleteById(identifier);
@@ -108,7 +106,7 @@ public class ToDoListController {
 	 * @PathVariable identifier is received in our request from front-end
 	 * Inside our request body we receive the new finished flag (@RequestBody param)
 	 */
-	@RequestMapping(value ="/todos/{identifier}.json", method = RequestMethod.PATCH)
+	@RequestMapping(value ="/todos/{identifier}", method = RequestMethod.PATCH)
 	public void updateToDoItem(@PathVariable String identifier, @RequestBody UpdateRequest requestBody) {
 		// set single todo item to finished and save the change to DB
 		DbToDoItem dbToDoItem = repository.findById(identifier).get();

@@ -36,6 +36,8 @@ public class ToDoItemConverter {
 		target.setText(source.getText());
 		target.setTitle(source.getTitle());
 		
+		target.setId(source.getIdentifier());
+		
 		return target;
 	}
 }
